@@ -4,6 +4,7 @@ from app.orm_models import USER_ROLE
 
 class User_Base(BaseModel):
     username: str = Field(min_length=1, max_length=50)
+    email: str = Field(min_length=1)
     role: USER_ROLE = USER_ROLE.EMP
 
 class User_Create(User_Base):

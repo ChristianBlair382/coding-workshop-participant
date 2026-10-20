@@ -18,43 +18,25 @@ from app.orm_models import (
 from app.security import encrypt_password
 
 PERMISSION_RESOURCES = (
-    "farms",
-    "equipments",
-    "field_jobs",
-    "service_reports",
-    "hands",
-    "supervisors",
     "users",
 )
 PERMISSION_ACTIONS = ("create", "read", "update", "delete")
 ROLE_PERMISSIONS = {
-    USER_ROLE.AUD: {
+    USER_ROLE.EMP: {
         f"{resource}:read"
         for resource in (
-            "farms",
-            "equipments",
-            "field_jobs",
-            "service_reports",
-            "hands",
-            "supervisors",
+            # INSERT READ PERMISSIONS HERE
         )
     },
-    USER_ROLE.FH: {
+    USER_ROLE.ENG: {
         f"{resource}:read"
         for resource in (
-            "farms",
-            "equipments",
-            "field_jobs",
-            "service_reports",
-            "hands",
-            "supervisors",
+            # INSERT READ PERMISSIONS HERE
         )
-    } | {
-        "equipments:update",
-        "field_jobs:update",
-        "service_reports:create",
-    },
-    USER_ROLE.FOA: {
+    }, #| {
+        # INSERT ENGINEER-SPECIFIC PERMISSIONS HERE
+    #},
+    USER_ROLE.FA: {
         f"{resource}:{action}"
         for resource in PERMISSION_RESOURCES
         for action in PERMISSION_ACTIONS
@@ -108,7 +90,7 @@ async def seed_tables() -> None:
 
         session.add_all([
             User(
-                username="facility_admin@acme.inc", 
+                username="facility_admin", 
                 email="facility_admin123@acme.inc", 
                 hashed_password=encrypt_password("FacilityAdmin123!"), 
                 role=USER_ROLE.FA
@@ -120,10 +102,10 @@ async def seed_tables() -> None:
                 role=USER_ROLE.ENG
             ),
             User(
-                username="auditor", 
+                username="employee", 
                 email="employee123@acme.inc",
-                hashed_password=encrypt_password("Auditor123!"), 
-                role=USER_ROLE.AUD
+                hashed_password=encrypt_password("Employee123!"), 
+                role=USER_ROLE.EMP
             ),
         ])
         await session.commit()
