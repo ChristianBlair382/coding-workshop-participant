@@ -9,10 +9,10 @@ function decodeToken(token) {
 }
 
 export function AuthProvider({children}) {
-    const [token, setToken] = useState(() => localStorage.getItem('agricoreToken'));
+    const [token, setToken] = useState(() => localStorage.getItem('acmeToken'));
 
     useEffect(() => {
-        const syncToken = () => setToken(localStorage.getItem('agricoreToken'));
+        const syncToken = () => setToken(localStorage.getItem('acmeToken'));
         window.addEventListener(AUTH_CHANGED_EVENT, syncToken);
         return () => window.removeEventListener(AUTH_CHANGED_EVENT, syncToken);
     }, []);
@@ -27,14 +27,14 @@ export function AuthProvider({children}) {
         const response = await apiClient.post('/auth/token', LoginFormData, {
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         });
-        localStorage.setItem('agricoreToken', response.data.access_token);
-        localStorage.setItem('agricoreRefreshToken', response.data.refresh_token);
+        localStorage.setItem('acmeToken', response.data.access_token);
+        localStorage.setItem('acmeRefreshToken', response.data.refresh_token);
         setToken(response.data.access_token);
     }
 
     const logout = () => {
-        localStorage.removeItem('agricoreToken');
-        localStorage.removeItem('agricoreRefreshToken');
+        localStorage.removeItem('acmeToken');
+        localStorage.removeItem('acmeRefreshToken');
         setToken(null);
     }
 

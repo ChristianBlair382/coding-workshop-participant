@@ -11,7 +11,17 @@ from starlette.concurrency import run_in_threadpool
 from app.dependencies import get_db, require_permission
 from app.orm_models import User
 
-from .routers import auth, users
+from .routers import (
+    auth,
+    buildings,
+    engineers,
+    floors,
+    incident_tickets,
+    seats,
+    ticket_note_attachments,
+    ticket_notes,
+    users,
+)
 
 import boto3
 
@@ -118,6 +128,13 @@ async def version_check() -> dict[str, str]:
 # INSERT APP ROUTES HERE
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(buildings.router)
+app.include_router(engineers.router)
+app.include_router(floors.router)
+app.include_router(incident_tickets.router)
+app.include_router(seats.router)
+app.include_router(ticket_notes.router)
+app.include_router(ticket_note_attachments.router)
 
 @app.exception_handler(IntegrityError)
 async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:

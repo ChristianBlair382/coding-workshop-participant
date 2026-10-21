@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, status, Depends, Response
-from sqlalchemy import select
+from fastapi import APIRouter, HTTPException, status, Depends, Response, Query
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_db, get_current_user, require_permission
 from app.orm_models import Permission, RolePermission, User, USER_ROLE
+from app.orm_models import Seat
 from app.routers.auth import register_new_user
 from app.schemas import (
     Role_Permissions_Read,
@@ -69,6 +70,77 @@ async def list_users(
     output = await db.execute(db_command)
 
     return list(output.scalars().all())
+
+
+@router.get("/seat-assignment-options", response_model=list[User_Read])
+async def list_seat_assignment_options(
+    query: str = Query(default="", max_length=50),
+    include_user_id: int | None = Query(default=None, gt=0),
+    include_user_ids: list[int] = Query(default=[]),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_permission("users:read")),
+) -> list[User]:
+    """Search unassigned users for seat assignment without loading the full user table."""
+    assigned_user_ids = select(Seat.occupied_by).where(Seat.occupied_by.is_not(None))
+    included_ids = set(include_user_ids)
+    if include_user_id is not None:
+        included_ids.add(include_user_id)
+    included_users = (
+        list(
+            (
+                await db.scalars(
+                    select(User).where(User.id.in_(included_ids))
+                )
+            ).all()
+        )
+        if included_ids
+        else []
+    )
+    available_users = (
+        list(
+            (
+                await db.scalars(
+                    select(User)
+                    .where(
+                        User.username.ilike(f"%{query.strip()}%"),
+                        ~User.id.in_(assigned_user_ids),
+                    )
+                    .order_by(User.username)
+                    .limit(25)
+                )
+            ).all()
+        )
+        if len(query.strip()) >= 2
+        else []
+    )
+    users_by_id = {user.id: user for user in included_users}
+    users_by_id.update({user.id: user for user in available_users})
+    return list(users_by_id.values())
+
+
+@router.get("/dashboard-counts")
+async def get_dashboard_user_counts(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, int]:
+    """Return aggregate user counts without exposing individual user records."""
+    employee_count = await db.scalar(
+        select(func.count(User.id)).where(User.role == USER_ROLE.EMP)
+    )
+    engineer_count = await db.scalar(
+        select(func.count(User.id)).where(User.role == USER_ROLE.ENG)
+    )
+    counts = {
+        "employee_count": employee_count or 0,
+        "engineer_count": engineer_count or 0,
+    }
+    if current_user.role == USER_ROLE.FA:
+        facility_admin_count = await db.scalar(
+            select(func.count(User.id)).where(User.role == USER_ROLE.FA)
+        )
+        counts["facility_admin_count"] = facility_admin_count or 0
+    return counts
+
 
 @router.get("/{user_id}", response_model=User_Read)
 async def find_user_by_id(

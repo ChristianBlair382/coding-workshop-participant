@@ -14,7 +14,7 @@ import {
     TextField
 } from "@mui/material";
 import apiClient from "../../api/client.js";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../services/AuthContext.jsx";
 
 const EMPTY_FORM_VALUES = {
     username: '',
@@ -76,7 +76,7 @@ export default function UsersDataGrid({onSuccess}) {
     const columns = useMemo(() => [
         {field: 'id', headerName: "ID", width: 70},
         {field: 'username', headerName: "Username", width: 140},
-        {field: 'email', headerName: "Email", Width: 210},
+        {field: 'email', headerName: "Email", Width: 280},
         {field: 'role', headerName: "Role", width: 210},
         ...(isAdmin ? [{
             field: 'actions',
@@ -190,6 +190,7 @@ export default function UsersDataGrid({onSuccess}) {
                     rows={users} 
                     columns={columns} 
                     getRowId={(row) => row.id}
+                    pageSizeOptions={[5, 10, 25]}
                     initialState={{
                         pagination: {
                             paginationModel: {

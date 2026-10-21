@@ -63,6 +63,7 @@ async def register_new_user(
     # If no such User exists, proceed with creating a new user.
     new_user = User(
         username = payload.username,
+        email = payload.email,
         hashed_password = encrypt_password(payload.password),
         role = payload.role
     )

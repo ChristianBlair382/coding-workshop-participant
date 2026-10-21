@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 /* MATERIAL UI COMPONENTS */
 import {
@@ -8,8 +8,6 @@ import {
   Button,
   Snackbar,
   Alert,
-  Card,
-  CardContent,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -30,14 +28,17 @@ import createAppTheme from "./theme.js";
 import apiClient from "./api/client.js";
 import AppHeader from "./components/layout/AppHeader.jsx";
 import LoginForm from "./components/auth/LoginForm.jsx";
+import UsersDataGrid from "./components/users/UsersDataGrid.jsx";
+import RolesAndPermissionsDataGrid from "./components/users/RolesAndPermissionsDataGrid.jsx";
+import EngineersDataGrid from "./components/engineers/EngineersDataGrid.jsx";
+import FacilitiesDataGrid from "./components/facilities/FacilitiesDataGrid.jsx";
+import IncidentTicketsDataGrid from "./components/incident_tickets/IncidentTicketsDataGrid.jsx";
+import DashboardSummaries from "./components/layout/DashboardSummaries.jsx";
 
 /* ICON IMPORTS */
 import GridViewIcon from '@mui/icons-material/GridView';
 import WarehouseIcon from '@mui/icons-material/Warehouse';
-import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import GroupsIcon from '@mui/icons-material/Groups';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
@@ -53,6 +54,7 @@ function Dashboard({mode, onToggleColorMode}) {
   const [completionRefreshKey, setCompletionRefreshKey] = useState(0)
 
   const isFA = user?.role === 'Facility_Admin' || user?.role === 'FA';
+  const isEngineer = user?.role === 'Engineer' || user?.role === 'ENG';
   const toggleDrawer = (newOpen) => () => {
     setDrawerOpen(newOpen);
   };
@@ -78,6 +80,7 @@ function Dashboard({mode, onToggleColorMode}) {
             <ListItemText primary="Dashboard"/>
           </ListItemButton>
         </ListItem>
+        {isFA && (
         <ListItem>
           <ListItemButton color="inherit" onClick={displaySelectedPage('facilities')}>
             <ListItemIcon color="secondary">
@@ -86,14 +89,7 @@ function Dashboard({mode, onToggleColorMode}) {
             <ListItemText primary="Facilities"/>
           </ListItemButton>
         </ListItem>
-        <ListItem>
-          <ListItemButton color="inherit" onClick={displaySelectedPage('seats')}>
-            <ListItemIcon color="secondary">
-              <PrecisionManufacturingIcon />
-            </ListItemIcon>
-            <ListItemText primary="Seats"/>
-          </ListItemButton>
-        </ListItem>
+        )}
         <ListItem>
           <ListItemButton color="inherit" onClick={displaySelectedPage('incident_tickets')}>
             <ListItemIcon color="secondary">
@@ -102,22 +98,14 @@ function Dashboard({mode, onToggleColorMode}) {
             <ListItemText primary="Incident Tickets"/>
           </ListItemButton>
         </ListItem>
-        <ListItem>
-          <ListItemButton color="inherit" onClick={displaySelectedPage('ticket_notes')}>
-            <ListItemIcon color="secondary">
-              <ReceiptLongIcon />
-            </ListItemIcon>
-            <ListItemText primary="Ticket Notes"/>
-          </ListItemButton>
-        </ListItem>
-        <ListItem>
+        {(isFA || isEngineer) && <ListItem>
           <ListItemButton color="inherit" onClick={displaySelectedPage('engineers')}>
             <ListItemIcon color="secondary">
-              <GroupsIcon />
+              <EngineeringIcon />
             </ListItemIcon>
             <ListItemText primary="Engineers"/>
           </ListItemButton>
-        </ListItem>
+        </ListItem>}
         { isFA && (
           <>
             <ListItem>
@@ -179,12 +167,6 @@ function Dashboard({mode, onToggleColorMode}) {
     };
   }, [permissionsDialogOpen]);
 
-  /*
-  useEffect(() => {
-    
-  }, [completionRefreshKey]);
-  */
-  
   const handleGridSuccess = (message) => {
     setNotification(message);
     setCompletionRefreshKey((currentKey) => currentKey + 1);
@@ -239,8 +221,7 @@ function Dashboard({mode, onToggleColorMode}) {
       </Dialog>
       
       <Container sx={{ padding: 4 }}>
-        {/*
-        { selectedPage === 'facilities' && (
+        {isFA && selectedPage === 'facilities' && (
           <>
             <Typography
               variant="h5"
@@ -250,25 +231,14 @@ function Dashboard({mode, onToggleColorMode}) {
               Facilities
             </Typography>
             <Box sx={{mb: 4}}>
-              <FacilitiesDataGrid onSuccess={handleGridSuccess} />
+              <FacilitiesDataGrid
+                onSuccess={handleGridSuccess}
+                refreshKey={completionRefreshKey}
+              />
             </Box>
           </>
         )}
-        { selectedPage === 'seats' && (
-          <>
-            <Typography
-            variant="h5"
-            component="h2"
-            gutterBottom
-            >
-              Seats
-            </Typography>
-            <Box sx={{mb: 4}}>
-              <SeatsDataGrid onSuccess={handleGridSuccess} />
-            </Box>
-          </>
-        )}
-        { selectedPage === 'incident_tickets' && (
+        {selectedPage === 'incident_tickets' && (
           <>
             <Typography
               variant="h5"
@@ -278,25 +248,14 @@ function Dashboard({mode, onToggleColorMode}) {
               Incident Tickets
             </Typography>
             <Box sx={{mb: 4}}>
-              <IncidentTicketsDataGrid onSuccess={handleGridSuccess} />
+              <IncidentTicketsDataGrid
+                onSuccess={handleGridSuccess}
+                refreshKey={completionRefreshKey}
+              />
             </Box>
           </>
         )}
-        { selectedPage === 'ticket_notes' && (
-          <>
-            <Typography
-              variant="h5"
-              component="h2"
-              gutterBottom
-            >
-              Ticket Notes
-            </Typography>
-            <Box sx={{mb: 4}}>
-              <TicketNotesDataGrid onSuccess={handleGridSuccess} />
-            </Box>
-          </>
-        )}
-        { selectedPage === 'engineers' && (
+        {(isFA || isEngineer) && selectedPage === 'engineers' && (
           <>
             <Typography
               variant="h5"
@@ -306,7 +265,10 @@ function Dashboard({mode, onToggleColorMode}) {
               Engineers
             </Typography>
             <Box sx={{mb: 4}}>
-              <EngineersDataGrid onSuccess={handleGridSuccess} />
+              <EngineersDataGrid
+                onSuccess={handleGridSuccess}
+                refreshKey={completionRefreshKey}
+              />
             </Box>
           </>
         )}
@@ -320,7 +282,7 @@ function Dashboard({mode, onToggleColorMode}) {
               Users
             </Typography>
             <Box sx={{mb: 4}}>
-              <UsersDataGrid onSuccess={handleGridSuccess}/>
+              <UsersDataGrid onSuccess={handleGridSuccess} />
             </Box>
             <Typography variant="h5" component="h2" gutterBottom>
               Roles and Permissions
@@ -330,8 +292,9 @@ function Dashboard({mode, onToggleColorMode}) {
             </Box>
           </>
         }
-        */}
-        <Typography>PLACEHOLDER</Typography>
+        {selectedPage === 'summaries' && (
+          <DashboardSummaries refreshKey={completionRefreshKey} />
+        )}
       </Container>
       
       <Snackbar 
@@ -378,11 +341,13 @@ function App() {
       console.warn("Could not save current color preference; will not remain persistent after this session. Sorry!", error);
     }
     document.documentElement.dataset.colorMode = mode;
-  }, [mode]);
+  }, [colorModePreference, mode]);
 
-  const toggleColorMode = () => {
-    setColorModePreference(mode === "dark" ? "light" : "dark");
-  };
+  const toggleColorMode = useCallback(() => {
+    setColorModePreference((currentPreference) => (
+      currentPreference === "dark" ? "light" : "dark"
+    ));
+  }, []);
 
   useEffect(() => {
     function handleKeyShortcut(e){

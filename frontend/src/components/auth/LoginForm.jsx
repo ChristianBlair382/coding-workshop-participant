@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Paper, Alert, Button, Typography, TextField, CircularProgress } from "@mui/material";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../services/AuthContext.jsx";
 
 export default function LoginForm() {
     const {login} = useAuth();
